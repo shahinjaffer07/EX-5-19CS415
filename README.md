@@ -29,66 +29,38 @@ STEP-5: Read the characters row wise or column wise in the former order to get t
 #include <stdlib.h>
 #include <string.h>
 
-char *rf_encrypt(const char *s, int r){
-    int n=strlen(s);
-    if(r<=1||n==0) return strdup(s);
-    char *out=malloc(n+1), *p=out; int cycle=2*(r-1);
-    for(int row=0; row<r; ++row)
-      for(int i=row; i<n; i+=cycle){
-        *p++=s[i];
-        int j=i+cycle-2*row;
-        if(row>0 && row<r-1 && j<n) *p++=s[j];
-      }
-    *p=0; return out;
+char *rf_enc(const char *s,int r){
+    int n=strlen(s); if(r<=1||n==0) return strdup(s);
+    char *o=malloc(n+1),*p=o; int c=2*(r-1);
+    for(int row=0;row<r;++row)
+        for(int i=row;i<n;i+=c){
+            *p++=s[i];
+            int j=i+c-2*row; if(row>0&&row<r-1&&j<n)*p++=s[j];
+        }
+    *p=0; return o;
 }
 
-char *rf_decrypt(const char *c, int r){
-    int n=strlen(c);
-    if(r<=1||n==0) return strdup(c);
-    int cycle=2*(r-1);
-    int *cnt=calloc(r,sizeof(int));
-    // count chars per row
-    for(int i=0;i<n;++i){
-        int mod=i%cycle;
-        int row = mod<r ? mod : cycle-mod;
-        cnt[row]++;
-    }
- 
-    char **rows = malloc(r*sizeof(char*));
-    int pos=0;
-    for(int row=0; row<r; ++row){
-        rows[row]=malloc(cnt[row]+1);
-        for(int k=0;k<cnt[row];++k) rows[row][k]=c[pos++];
-        rows[row][cnt[row]]=0;
-    }
-
-    char *out=malloc(n+1);
-    int idxs[r]; for(int i=0;i<r;++i) idxs[i]=0;
-    for(int i=0;i<n;++i){
-        int mod=i%cycle;
-        int row = mod<r ? mod : cycle-mod;
-        out[i]=rows[row][ idxs[row]++ ];
-    }
-    out[n]=0;
-    for(int i=0;i<r;++i) free(rows[i]);
-    free(rows); free(cnt);
-    return out;
+char *rf_dec(const char *c,int r){
+    int n=strlen(c); if(r<=1||n==0) return strdup(c);
+    int cycle=2*(r-1),*cnt=calloc(r,sizeof(int));
+    for(int i=0;i<n;++i){ int m=i%cycle,row=m<r?m:cycle-m; cnt[row]++; }
+    char **rows=malloc(r*sizeof(char*)),*o=malloc(n+1); int pos=0;
+    for(int i=0;i<r;i++){ rows[i]=malloc(cnt[i]); for(int j=0;j<cnt[i];j++) rows[i][j]=c[pos++]; }
+    int idx[r]; for(int i=0;i<r;i++) idx[i]=0;
+    for(int i=0;i<n;i++){ int m=i%cycle,row=m<r?m:cycle-m; o[i]=rows[row][idx[row]++]; }
+    o[n]=0; for(int i=0;i<r;i++) free(rows[i]); free(rows); free(cnt); return o;
 }
 
-int main(void){
-    char text[512], cipher[512];
-    int key;
-    printf("Text: "); fgets(text,sizeof text,stdin); text[strcspn(text,"\n")]=0;
-    printf("Rails: "); if(scanf("%d",&key)!=1) return 0;
-    char *enc = rf_encrypt(text,key);
-    printf("Encrypted: %s\n", enc);
-    printf("Enter encrypted (no spaces) to decrypt: ");
-    if(scanf("%s",cipher)!=1){ free(enc); return 0; }
-    char *dec = rf_decrypt(cipher,key);
-    printf("Decrypted: %s\n", dec);
-    free(enc); free(dec);
-    return 0;
+int main(){
+    char t[512],c[512]; int k;
+    printf("Enter text: "); fgets(t,sizeof t,stdin); t[strcspn(t,"\n")]=0;
+    printf("Enter number of rails: "); scanf("%d",&k);
+    char *e=rf_enc(t,k); printf("Encrypted: %s\n",e);
+    printf("Enter encrypted text to decrypt (no spaces): "); scanf("%s",c);
+    char *d=rf_dec(c,k); printf("Decrypted: %s\n",d);
+    free(e); free(d);
 }
+
 
 ```
 # OUTPUT
